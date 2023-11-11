@@ -1,0 +1,17 @@
+name: ankimolecules
+channels:
+  - conda-forge
+  - schrodinger
+dependencies:
+  - pymol-bundle
+  - vtk-m==1.5.1
+  - pandas
+  - openpyxl
+  - genanki
+  - chembl_webresource_client
+  - tqdm
+  # Development
+  - black
+  - pyright
+  - pip:
+    - cdpkit
