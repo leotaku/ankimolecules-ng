@@ -3,13 +3,11 @@ import requests
 
 from anki_model import DeckSet, MoleculeNote, Package
 from chembl_webresource_client.new_client import new_client
+from rdkit.Chem.rdmolfiles import MolFromMolBlock, MolToMolBlock
 from pathlib import Path
 from pymol2 import PyMOL
 from tqdm import tqdm
 from typing import NamedTuple
-from rdkit.Chem.rdForceFieldHelpers import MMFFOptimizeMolecule
-from rdkit.Chem import MolFromMolBlock, MolToMolBlock, AddHs  # type:ignore
-from rdkit.rdBase import BlockLogs
 
 
 class Row(NamedTuple):
@@ -50,18 +48,6 @@ def write_files_for_chembl(dir: Path, chemblid: str):
         mol = MolFromMolBlock(
             molecule["molecule_structures"]["molfile"], removeHs=False
         )
-
-        # with BlockLogs():
-        #     try:
-        #         mol_with_hs = AddHs(mol)
-        #         MMFFOptimizeMolecule(mol_with_hs)
-        #     except:
-        #         try:
-        #             MMFFOptimizeMolecule(mol)
-        #         except:
-        #             pass
-        #     else:
-        #         mol = mol_with_hs
 
         f.write(MolToMolBlock(mol))
 
