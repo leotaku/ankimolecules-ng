@@ -9,7 +9,7 @@ class DeckSet:
 
     def add_note(self, subdeck_name: str, note: Note):
         full_name = f"{self.root_deck_name}::{subdeck_name}"
-        if not subdeck_name in self._decks:
+        if subdeck_name not in self._decks:
             self._decks[subdeck_name] = Deck(abs(hash(full_name)), full_name)
 
         self._decks[subdeck_name].add_note(note)
