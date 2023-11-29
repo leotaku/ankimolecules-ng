@@ -24,6 +24,7 @@ model = Model(
     sort_field_index=1,
     fields=[
         {"name": "ChEMBL ID"},
+        {"name": "PubChem ID"},
         {"name": "Name"},
         {"name": "3D Structure"},
     ],
@@ -47,9 +48,10 @@ model = Model(
 
 
 class MoleculeNote(Note):
-    def __init__(self, name: str, chemblid: str):
+    def __init__(self, name: str, chemblid: str, pubchemid: str):
         super().__init__(
-            model=model, fields=[chemblid, name, f"<img src='{chemblid}.png' />"]
+            model=model,
+            fields=[chemblid, pubchemid, name, f"<img src='{chemblid}.png' />"],
         )
 
     @property
