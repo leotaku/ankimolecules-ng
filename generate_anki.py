@@ -5,6 +5,7 @@ import pandas as pd
 import requests
 
 from anki_model import DeckSet, DeckNumberer, MoleculeNote, Package
+from spreadsheet_model import Row, SpreadsheetModel
 from chembl_webresource_client.new_client import new_client
 from rdkit.Chem.rdmolfiles import MolFromMolBlock, MolToMolBlock
 from rdkit.Chem.rdForceFieldHelpers import MMFFOptimizeMolecule
@@ -17,32 +18,6 @@ from rdkit.rdBase import BlockLogs
 from pathlib import Path
 from pymol2 import PyMOL
 from tqdm import tqdm
-from typing import NamedTuple
-
-
-import pandera as pa
-from pandera.typing import Series
-
-
-class Row(NamedTuple):
-    document_location: str
-    classification: str
-    name: str
-    chemblid: str
-    pubchemid: str
-    skip: bool
-
-
-class Schema(pa.DataFrameModel):
-    document_location: Series[str] = pa.Field()
-    classification: Series[str] = pa.Field()
-    name: Series[str] = pa.Field()
-    chemblid: Series[str] = pa.Field(nullable=True)
-    pubchemid: Series[str] = pa.Field(nullable=True)
-    skip: Series[str] = pa.Field(nullable=True)
-
-    class Config:
-        add_missing_columns = True
 
 
 def fetch_3d_molecule(row: Row) -> Mol:
@@ -169,8 +144,8 @@ for sheet_name, sheet in sheets.items():
     if len(sheet_name) < 1 or sheet_name[0] != "D":
         continue
 
-    sheet = Schema.validate(sheet)
     sheet = sheet.replace({np.nan: None, "#NAME?": None})
+    sheet = SpreadsheetModel.validate(sheet)
 
     for row in tqdm(list(sheet.itertuples()), desc=sheet_name):  # type: ignore
         row: Row
