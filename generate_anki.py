@@ -11,7 +11,7 @@ from rdkit.Chem.rdmolfiles import MolFromMolBlock, MolToMolBlock
 from rdkit.Chem.rdForceFieldHelpers import MMFFOptimizeMolecule
 from rdkit.Chem.rdDistGeom import EmbedMolecule
 from rdkit.Chem.rdchem import Mol
-from rdkit.Chem.rdmolops import AddHs, RemoveHs
+from rdkit.Chem.rdmolops import AddHs
 from rdkit.Chem.Draw import MolToImage
 from rdkit.Chem.rdDepictor import Compute2DCoords, GenerateDepictionMatching3DStructure
 from rdkit.rdBase import BlockLogs
