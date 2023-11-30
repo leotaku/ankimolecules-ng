@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import requests
 
-from anki_model import DeckSet, MoleculeNote, Package
+from anki_model import DeckSet, DeckNumberer, MoleculeNote, Package
 from chembl_webresource_client.new_client import new_client
 from rdkit.Chem.rdmolfiles import MolFromMolBlock, MolToMolBlock
 from rdkit.Chem.rdForceFieldHelpers import MMFFOptimizeMolecule
@@ -19,12 +19,30 @@ from pymol2 import PyMOL
 from tqdm import tqdm
 from typing import NamedTuple
 
+
+import pandera as pa
+from pandera.typing import Series
+
+
 class Row(NamedTuple):
     document_location: str
     classification: str
     name: str
     chemblid: str
     pubchemid: str
+    skip: bool
+
+
+class Schema(pa.DataFrameModel):
+    document_location: Series[str] = pa.Field()
+    classification: Series[str] = pa.Field()
+    name: Series[str] = pa.Field()
+    chemblid: Series[str] = pa.Field(nullable=True)
+    pubchemid: Series[str] = pa.Field(nullable=True)
+    skip: Series[str] = pa.Field(nullable=True)
+
+    class Config:
+        add_missing_columns = True
 
 
 def fetch_3d_molecule(row: Row) -> Mol:
@@ -37,6 +55,8 @@ def fetch_3d_molecule(row: Row) -> Mol:
             mol.SetProp("_Name", row.pubchemid)
 
             return mol
+        else:
+            pass
 
     if row.chemblid:
         molecule = new_client.molecule.get(row.chemblid)  # type:ignore
@@ -56,7 +76,13 @@ def fetch_3d_molecule(row: Row) -> Mol:
 
             return mol
 
-    raise Exception("could not")
+    try:
+        mol = fetch_2d_molecule(row)
+        return mol
+    except BaseException:
+        pass
+
+    raise Exception(f"could not fetch: {row.name}")
 
 
 def fetch_2d_molecule(row: Row) -> Mol:
@@ -80,72 +106,90 @@ def fetch_2d_molecule(row: Row) -> Mol:
 
             return mol
 
-    raise Exception("could not")
+    raise Exception(f"could not fetch: {row.name}")
+
+
+def files_exist(dir: Path, row: Row):
+    result = {}
+
+    for id in [row.chemblid, row.pubchemid]:
+        if not id:
+            continue
+
+        path3d = dir.joinpath(id + "_3D.png")
+        if path3d.exists():
+            result["3d"] = path3d.name
+
+        path2d = dir.joinpath(id + "_2D.png")
+        if path2d.exists():
+            result["2d"] = path2d.name
+
+    return result if len(result) == 2 else None
 
 
 def write_files(dir: Path, row: Row):
-    if (
-        dir.joinpath(f"{row.pubchemid}_3D.png").exists()
-        or dir.joinpath(f"{row.chemblid}_3D.png").exists()
-    ):
-        return
+    mol3d = fetch_3d_molecule(row)
+    pathMol3d = dir.joinpath(f"{mol3d.GetProp('_Name')}_3D.mol")
+    path3d = dir.joinpath(f"{mol3d.GetProp('_Name')}_3D.png")
 
-    try:
-        mol3d = fetch_3d_molecule(row)
-    except Exception:
-        return
-
-    id = mol3d.GetProp("_Name")
-
-    with dir.joinpath(f"{id}_3D.mol").open("+w") as f:
+    with pathMol3d.open("+w") as f:
         f.write(MolToMolBlock(mol3d))
 
     with PyMOL() as p:
-        p.cmd.load(dir.joinpath(f"{id}_3D.mol"))
+        p.cmd.load(pathMol3d)
         p.cmd.color("gray", "(symbol C)")
         p.cmd.show_as("sticks")
         p.cmd.hide("(symbol H)")
         p.cmd.orient()
         p.cmd.zoom(complete=1)
-        p.cmd.png(dir.joinpath(f"{id}_3D.png").as_posix(), 1000, 800, dpi=150, ray=1)
+        p.cmd.png(path3d.as_posix(), 1000, 800, dpi=150, ray=1)
 
-    try:
-        mol2d = fetch_2d_molecule(row)
-    except Exception:
-        return
+    mol2d = fetch_2d_molecule(row)
+    path2d = dir.joinpath(f"{mol2d.GetProp('_Name')}_2D.png")
 
     try:
         GenerateDepictionMatching3DStructure(mol2d, mol3d)
     except BaseException:
         Compute2DCoords(mol2d)
 
-    MolToImage(mol2d).save(dir.joinpath(f"{id}_2D.png"))
+    MolToImage(mol2d).save(path2d)
+
+    return {"2d": path2d.name, "3d": path3d.name}
 
 
 upstream_url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQgbPmrlTty5Q2luk79OigcbyWyQXAQR4xMpxNWJYHwMPpZvGjhBN7wd88vgAyWGMyzwIedvpR4iiNO/pub?output=xlsx"
 data_dir = Path("data")
 data_dir.mkdir(exist_ok=True, parents=True)
 
-sheets = pd.read_excel(upstream_url, sheet_name=None)
-decks = DeckSet("15 Pharmazeutische Chemie")
+sheets = pd.read_excel(upstream_url, sheet_name=None, dtype=str)
+decks = DeckSet("B15 Pharmazeutische Chemie")
+numberer = DeckNumberer()
 
 for sheet_name, sheet in sheets.items():
     if len(sheet_name) < 1 or sheet_name[0] != "D":
         continue
 
+    sheet = Schema.validate(sheet)
     sheet = sheet.replace({np.nan: None, "#NAME?": None})
 
     for row in tqdm(list(sheet.itertuples()), desc=sheet_name):  # type: ignore
         row: Row
 
-        write_files(data_dir, row)
+        if row.skip:
+            continue
+
+        if not (files := files_exist(data_dir, row)):
+            files = write_files(data_dir, row)
 
         note = MoleculeNote(
-            name=row.name, chemblid=row.chemblid, pubchemid=row.pubchemid
+            name=row.name,
+            chemblid=f"{row.chemblid}",
+            pubchemid=f"{row.pubchemid}",
+            file_2d=files["2d"],
+            file_3d=files["3d"],
         )
-        decks.add_note(
-            row.classification if pd.notnull(row.classification) else "Other", note
-        )
+
+        decks.add_note(numberer.number(row.classification), note)
 
 Package(
     deck_or_decks=decks.to_list(), media_files=data_dir.glob("*.png")

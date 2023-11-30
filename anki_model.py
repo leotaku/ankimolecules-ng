@@ -37,13 +37,14 @@ class DeckSet:
 
 
 model = Model(
-    1720913576,
+    1720913573,
     "Molecule",
-    sort_field_index=1,
+    sort_field_index=0,
     fields=[
+        {"name": "Name"},
         {"name": "ChEMBL ID"},
         {"name": "PubChem ID"},
-        {"name": "Name"},
+        {"name": "2D Structure"},
         {"name": "3D Structure"},
     ],
     templates=[
@@ -66,12 +67,25 @@ model = Model(
 
 
 class MoleculeNote(Note):
-    def __init__(self, name: str, chemblid: str, pubchemid: str):
+    def __init__(
+        self,
+        name: str,
+        chemblid: str,
+        pubchemid: str,
+        file_2d: PathLike,
+        file_3d: PathLike,
+    ):
         super().__init__(
             model=model,
-            fields=[chemblid, pubchemid, name, f"<img src='{chemblid}.png' />"],
+            fields=[
+                name,
+                chemblid,
+                pubchemid,
+                f"<img src='{file_2d}' />",
+                f"<img src='{file_3d}' />",
+            ],
         )
 
     @property
     def guid(self):
-        return guid_for(self.fields[0])  # type:ignore
+        return guid_for(self.fields[0] + ":::" + self.fields[1])  # type:ignore
