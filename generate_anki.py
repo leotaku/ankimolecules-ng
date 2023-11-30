@@ -1,23 +1,24 @@
 #!/usr/bin/env python
 
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 import requests
-
-from anki_model import DeckSet, DeckNumberer, MoleculeNote, Package
-from spreadsheet_model import Row, SpreadsheetModel
 from chembl_webresource_client.new_client import new_client
-from rdkit.Chem.rdmolfiles import MolFromMolBlock, MolToMolBlock
-from rdkit.Chem.rdForceFieldHelpers import MMFFOptimizeMolecule
-from rdkit.Chem.rdDistGeom import EmbedMolecule
-from rdkit.Chem.rdchem import Mol
-from rdkit.Chem.rdmolops import AddHs
-from rdkit.Chem.Draw import MolToImage
-from rdkit.Chem.rdDepictor import Compute2DCoords, GenerateDepictionMatching3DStructure
-from rdkit.rdBase import BlockLogs
-from pathlib import Path
 from pymol2 import PyMOL
+from rdkit.Chem.Draw import MolToImage
+from rdkit.Chem.rdchem import Mol
+from rdkit.Chem.rdDepictor import Compute2DCoords, GenerateDepictionMatching3DStructure
+from rdkit.Chem.rdDistGeom import EmbedMolecule
+from rdkit.Chem.rdForceFieldHelpers import MMFFOptimizeMolecule
+from rdkit.Chem.rdmolfiles import MolFromMolBlock, MolToMolBlock
+from rdkit.Chem.rdmolops import AddHs
+from rdkit.rdBase import BlockLogs
 from tqdm import tqdm
+
+from anki_model import DeckNumberer, DeckSet, MoleculeNote, Package
+from spreadsheet_model import Row, SpreadsheetModel
 
 
 def fetch_3d_molecule(row: Row) -> Mol:

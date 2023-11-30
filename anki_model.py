@@ -1,6 +1,7 @@
-from typing import List
-from genanki import Note, Deck, Model, Package, guid_for
 from os import PathLike
+from typing import List
+
+from genanki import Deck, Model, Note, Package, guid_for
 
 
 class DeckNumberer:
