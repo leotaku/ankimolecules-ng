@@ -1,5 +1,23 @@
 from typing import List
 from genanki import Note, Deck, Model, Package, guid_for
+from os import PathLike
+
+
+class DeckNumberer:
+    def __init__(self):
+        self._mapping = {}
+
+    def number(self, name: str) -> str:
+        segments = []
+
+        for i, segment in enumerate(name.split("::")):
+            parent = "::".join(segments)
+            self._mapping.setdefault(parent, {})
+            self._mapping[parent].setdefault(segment, len(self._mapping[parent]) + 1)
+
+            segments.append(f"{self._mapping[parent][segment]:02d}: {segment}")
+
+        return "::".join(segments)
 
 
 class DeckSet:
