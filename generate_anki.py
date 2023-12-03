@@ -142,7 +142,7 @@ decks = DeckSet("B15 Pharmazeutische Chemie")
 numberer = DeckNumberer()
 
 for sheet_name, sheet in sheets.items():
-    if len(sheet_name) < 1 or sheet_name[0] != "D":
+    if len(sheet_name) < 1 or sheet_name[0] != "#":
         continue
 
     sheet = sheet.replace({np.nan: None, "#NAME?": None})
