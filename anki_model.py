@@ -33,6 +33,12 @@ class DeckSet:
 
         self._decks[subdeck_name].add_note(note)
 
+    def count(self) -> int:
+        count = 0
+        for deck in self._decks.values():
+            count += len(deck.notes)
+        return count
+
     def to_list(self) -> List[Deck]:
         return list(self._decks.values())
 

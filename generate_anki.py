@@ -167,6 +167,8 @@ for sheet_name, sheet in sheets.items():
 
         decks.add_note(numberer.number(row.classification), note)
 
+print(f"Total molecules: {decks.count()}")
+
 Package(
     deck_or_decks=decks.to_list(), media_files=data_dir.glob("*.png")
 ).write_to_file(data_dir.joinpath(f"{decks.root_deck_name}.apkg"))
