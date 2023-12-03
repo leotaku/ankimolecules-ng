@@ -145,8 +145,12 @@ for sheet_name, sheet in sheets.items():
     if len(sheet_name) < 1 or sheet_name[0] != "#":
         continue
 
-    sheet = sheet.replace({np.nan: None, "#NAME?": None})
-    sheet = SpreadsheetModel.validate(sheet)
+    try:
+        sheet = sheet.replace({np.nan: None, "#NAME?": None})
+        sheet.document_location = sheet.document_location.replace({None: "N/A"})
+        sheet = SpreadsheetModel.validate(sheet)
+    except BaseException as e:
+        raise Exception(f"validating {sheet_name}") from e
 
     for row in tqdm(list(sheet.itertuples()), desc=sheet_name):  # type: ignore
         row: Row
