@@ -123,11 +123,6 @@ def write_files(dir: Path, row: Row):
     mol2d = fetch_2d_molecule(row)
     path2d = dir.joinpath(f"{mol2d.GetProp('_Name')}_2D.png")
 
-    try:
-        GenerateDepictionMatching3DStructure(mol2d, mol3d)
-    except BaseException:
-        Compute2DCoords(mol2d)
-
     MolToImage(mol2d).save(path2d)
 
     return {"2d": path2d.name, "3d": path3d.name}
