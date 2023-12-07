@@ -49,6 +49,7 @@ model = Model(
     sort_field_index=0,
     fields=[
         {"name": "Name"},
+        {"name": "Taxonomy"},
         {"name": "ChEMBL ID"},
         {"name": "PubChem ID"},
         {"name": "2D Structure"},
@@ -58,7 +59,7 @@ model = Model(
         {
             "name": "3D Structure to Name",
             "qfmt": "{{3D Structure}}",
-            "afmt": '{{FrontSide}}<hr id="answer">{{Name}}',
+            "afmt": '{{FrontSide}}<hr id="answer">{{Name}}<br><small>({{Taxonomy}})</small>',
         }
     ],
     css="""
@@ -77,6 +78,7 @@ class MoleculeNote(Note):
     def __init__(
         self,
         name: str,
+        taxonomy: [str],
         chemblid: str,
         pubchemid: str,
         file_2d: PathLike,
@@ -86,6 +88,7 @@ class MoleculeNote(Note):
             model=model,
             fields=[
                 name,
+                "↦".join(taxonomy),
                 chemblid,
                 pubchemid,
                 f"<img src='{file_2d}' />",

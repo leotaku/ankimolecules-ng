@@ -158,6 +158,7 @@ for sheet_name, sheet in sheets.items():
 
         note = MoleculeNote(
             name=row.name,
+            taxonomy=row.classification.split("::"),
             chemblid=f"{row.chemblid}",
             pubchemid=f"{row.pubchemid}",
             file_2d=files["2d"],
