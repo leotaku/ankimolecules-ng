@@ -57,6 +57,11 @@ model = Model(
     ],
     templates=[
         {
+            "name": "2D Structure to Name",
+            "qfmt": "{{2D Structure}}",
+            "afmt": '{{FrontSide}}<hr id="answer">{{Name}}<br><small>({{Taxonomy}})</small>',
+        },
+        {
             "name": "3D Structure to Name",
             "qfmt": "{{3D Structure}}",
             "afmt": '{{FrontSide}}<hr id="answer">{{Name}}<br><small>({{Taxonomy}})</small>',
