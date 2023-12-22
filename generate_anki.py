@@ -20,19 +20,25 @@ from anki_model import DeckNumberer, DeckSet, MoleculeNote, Package
 from spreadsheet_model import Row, SpreadsheetModel
 
 
+def optimize_mol(mol: Mol) -> Mol:
+    try:
+        with BlockLogs():
+            AddHs(mol)
+            EmbedMolecule(mol)
+            MMFFOptimizeMolecule(mol)
+    except BaseException:
+        pass
+
+    return mol
+
+
 def fetch_chembl(id, kind) -> Mol:
     rsp = new_client.molecule.get(row.chemblid)  # type:ignore
     mol = MolFromMolBlock(rsp["molecule_structures"]["molfile"], removeHs=False)
     mol.SetProp("_Name", row.chemblid)
 
     if kind == "3d":
-        try:
-            with BlockLogs():
-                AddHs(mol)
-                EmbedMolecule(mol)
-                MMFFOptimizeMolecule(mol)
-        except BaseException:
-            pass
+        return optimize_mol(mol)
 
     return mol
 
@@ -42,7 +48,11 @@ def fetch_pubchem(id, kind) -> Mol:
         f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/{row.pubchemid}/sdf?record_type={kind}"
     )
     if rsp.status_code != 200:
-        raise Exception("could not fetch from pubchem")
+        if kind == "3d":
+            mol = fetch_pubchem(id, kind="2d")
+            return optimize_mol(mol)
+        else:
+            raise Exception(f"could not fetch from PubChem: {row.pubchemid}")
 
     mol = MolFromMolBlock(rsp.text, removeHs=False)
     mol.SetProp("_Name", row.pubchemid)
@@ -57,7 +67,7 @@ def fetch_mol(row: Row, kind) -> Mol:
     if row.chemblid:
         return fetch_chembl(row.chemblid, kind)
 
-    raise Exception("no valid ID present")
+    raise Exception(f"no valid ID present for: {row.name}")
 
 
 def files_exist(dir: Path, row: Row):
