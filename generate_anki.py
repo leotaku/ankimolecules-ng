@@ -6,7 +6,6 @@ from typing import Literal
 import numpy as np
 import pandas as pd
 import requests
-from chembl_webresource_client.new_client import new_client
 from pymol2 import PyMOL
 from rdkit.Chem.Draw import MolToImage
 from rdkit.Chem.rdchem import Mol
@@ -34,8 +33,13 @@ def optimize_mol(mol: Mol) -> Mol:
 
 
 def fetch_chembl(id, kind: Literal["2d", "3d"]) -> Mol:
-    rsp = new_client.molecule.get(row.chemblid)  # type:ignore
-    mol = MolFromMolBlock(rsp["molecule_structures"]["molfile"], removeHs=False)
+    rsp = requests.get(
+        f"https://www.ebi.ac.uk/chembl/api/data/molecule/{id}?format=sdf",
+    )
+    if rsp.status_code != 200:
+        raise Exception(f"could not fetch from ChEMBL: {row.name}")
+
+    mol = MolFromMolBlock(rsp.text, removeHs=False)
     mol.SetProp("_Name", row.chemblid)
 
     if kind == "3d":

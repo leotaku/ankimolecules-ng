@@ -8,7 +8,6 @@ dependencies:
   - pandas
   - openpyxl
   - genanki
-  - chembl_webresource_client
   - tqdm
   # Development
   - black
