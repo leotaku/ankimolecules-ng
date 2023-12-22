@@ -65,7 +65,7 @@ model = Model(
             "name": "3D Structure to Name",
             "qfmt": "{{3D Structure}}",
             "afmt": '{{FrontSide}}<hr id="answer">{{Name}}<br><small>({{Taxonomy}})</small>',
-        }
+        },
     ],
     css="""
 .card {
