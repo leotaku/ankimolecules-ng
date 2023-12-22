@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from pathlib import Path
+from typing import Literal
 
 import numpy as np
 import pandas as pd
@@ -32,7 +33,7 @@ def optimize_mol(mol: Mol) -> Mol:
     return mol
 
 
-def fetch_chembl(id, kind) -> Mol:
+def fetch_chembl(id, kind: Literal["2d", "3d"]) -> Mol:
     rsp = new_client.molecule.get(row.chemblid)  # type:ignore
     mol = MolFromMolBlock(rsp["molecule_structures"]["molfile"], removeHs=False)
     mol.SetProp("_Name", row.chemblid)
@@ -43,7 +44,7 @@ def fetch_chembl(id, kind) -> Mol:
     return mol
 
 
-def fetch_pubchem(id, kind) -> Mol:
+def fetch_pubchem(id, kind: Literal["2d", "3d"]) -> Mol:
     rsp = requests.get(
         f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/{row.pubchemid}/sdf?record_type={kind}"
     )
@@ -60,7 +61,7 @@ def fetch_pubchem(id, kind) -> Mol:
     return mol
 
 
-def fetch_mol(row: Row, kind) -> Mol:
+def fetch_mol(row: Row, kind: Literal["2d", "3d"]) -> Mol:
     if row.pubchemid:
         return fetch_pubchem(row.pubchemid, kind)
 
