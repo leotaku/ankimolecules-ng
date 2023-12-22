@@ -9,7 +9,6 @@ from chembl_webresource_client.new_client import new_client
 from pymol2 import PyMOL
 from rdkit.Chem.Draw import MolToImage
 from rdkit.Chem.rdchem import Mol
-from rdkit.Chem.rdDepictor import Compute2DCoords, GenerateDepictionMatching3DStructure
 from rdkit.Chem.rdDistGeom import EmbedMolecule
 from rdkit.Chem.rdForceFieldHelpers import MMFFOptimizeMolecule
 from rdkit.Chem.rdmolfiles import MolFromMolBlock, MolToMolBlock
@@ -21,68 +20,44 @@ from anki_model import DeckNumberer, DeckSet, MoleculeNote, Package
 from spreadsheet_model import Row, SpreadsheetModel
 
 
-def fetch_3d_molecule(row: Row) -> Mol:
-    if row.pubchemid:
-        rsp = requests.get(
-            f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/{row.pubchemid}/sdf?record_type=3d"
-        )
-        if rsp.status_code == 200:
-            mol = MolFromMolBlock(rsp.text, removeHs=False)
-            mol.SetProp("_Name", row.pubchemid)
+def fetch_chembl(id, kind) -> Mol:
+    rsp = new_client.molecule.get(row.chemblid)  # type:ignore
+    mol = MolFromMolBlock(rsp["molecule_structures"]["molfile"], removeHs=False)
+    mol.SetProp("_Name", row.chemblid)
 
-            return mol
-        else:
+    if kind == "3d":
+        try:
+            with BlockLogs():
+                AddHs(mol)
+                EmbedMolecule(mol)
+                MMFFOptimizeMolecule(mol)
+        except BaseException:
             pass
 
-    if row.chemblid:
-        molecule = new_client.molecule.get(row.chemblid)  # type:ignore
-        if molecule["molecule_structures"]:
-            mol = MolFromMolBlock(
-                molecule["molecule_structures"]["molfile"], removeHs=False
-            )
-            mol.SetProp("_Name", row.chemblid)
-
-            try:
-                with BlockLogs():
-                    AddHs(mol)
-                    EmbedMolecule(mol)
-                    MMFFOptimizeMolecule(mol)
-            except BaseException:
-                pass
-
-            return mol
-
-    try:
-        mol = fetch_2d_molecule(row)
-        return mol
-    except BaseException:
-        pass
-
-    raise Exception(f"could not fetch: {row.name}")
+    return mol
 
 
-def fetch_2d_molecule(row: Row) -> Mol:
+def fetch_pubchem(id, kind) -> Mol:
+    rsp = requests.get(
+        f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/{row.pubchemid}/sdf?record_type={kind}"
+    )
+    if rsp.status_code != 200:
+        raise Exception("could not fetch from pubchem")
+
+    mol = MolFromMolBlock(rsp.text, removeHs=False)
+    mol.SetProp("_Name", row.pubchemid)
+
+    return mol
+
+
+def fetch_mol(row: Row, kind) -> Mol:
     if row.pubchemid:
-        rsp = requests.get(
-            f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/{row.pubchemid}/sdf?record_type=2d"
-        )
-        if rsp.status_code == 200:
-            mol = MolFromMolBlock(rsp.text, removeHs=True)
-            mol.SetProp("_Name", row.pubchemid)
-
-            return mol
+        return fetch_pubchem(row.pubchemid, kind)
 
     if row.chemblid:
-        molecule = new_client.molecule.get(row.chemblid)  # type:ignore
-        if molecule["molecule_structures"]:
-            mol = MolFromMolBlock(
-                molecule["molecule_structures"]["molfile"], removeHs=True
-            )
-            mol.SetProp("_Name", row.chemblid)
+        return fetch_chembl(row.chemblid, kind)
 
-            return mol
-
-    raise Exception(f"could not fetch: {row.name}")
+    raise Exception("no valid ID present")
 
 
 def files_exist(dir: Path, row: Row):
@@ -104,7 +79,7 @@ def files_exist(dir: Path, row: Row):
 
 
 def write_files(dir: Path, row: Row):
-    mol3d = fetch_3d_molecule(row)
+    mol3d = fetch_mol(row, kind="3d")
     pathMol3d = dir.joinpath(f"{mol3d.GetProp('_Name')}_3D.mol")
     path3d = dir.joinpath(f"{mol3d.GetProp('_Name')}_3D.png")
 
@@ -120,7 +95,7 @@ def write_files(dir: Path, row: Row):
         p.cmd.zoom(complete=1)
         p.cmd.png(path3d.as_posix(), 1000, 800, dpi=150, ray=1)
 
-    mol2d = fetch_2d_molecule(row)
+    mol2d = fetch_mol(row, kind="2d")
     path2d = dir.joinpath(f"{mol2d.GetProp('_Name')}_2D.png")
 
     MolToImage(mol2d).save(path2d)
