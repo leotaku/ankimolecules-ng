@@ -122,7 +122,7 @@ upstream_url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQgbPmrlTty5Q2lu
 data_dir = Path("data")
 data_dir.mkdir(exist_ok=True, parents=True)
 
-sheets = pd.read_excel(upstream_url, sheet_name=None, dtype=str)
+sheets = pd.read_excel(upstream_url, sheet_name=None, dtype=str, keep_default_na=False)
 decks = DeckSet("B15 Pharmazeutische Chemie")
 numberer = DeckNumberer()
 
@@ -131,9 +131,7 @@ for sheet_name, sheet in sheets.items():
         continue
 
     try:
-        sheet = sheet.replace({np.nan: None, "#NAME?": None})
-        sheet.document_location = sheet.document_location.replace({None: "N/A"})
-        sheet = SpreadsheetModel.validate(sheet)
+        sheet = SpreadsheetModel.validate(sheet).replace({np.nan: None})
     except BaseException as e:
         raise Exception(f"validating {sheet_name}") from e
 
