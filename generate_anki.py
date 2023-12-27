@@ -39,7 +39,7 @@ def fetch_chembl(id, kind: Literal["2d", "3d"]) -> Mol:
     if rsp.status_code != 200:
         raise Exception(f"could not fetch from ChEMBL: '{row.chemblid}'")
 
-    mol = MolFromMolBlock(rsp.text, removeHs=False)
+    mol = MolFromMolBlock(rsp.text, removeHs=True)
     mol.SetProp("_Name", row.chemblid)
 
     if kind == "3d":
@@ -59,7 +59,7 @@ def fetch_pubchem(id, kind: Literal["2d", "3d"]) -> Mol:
         else:
             raise Exception(f"could not fetch from PubChem: '{row.pubchemid}'")
 
-    mol = MolFromMolBlock(rsp.text, removeHs=False)
+    mol = MolFromMolBlock(rsp.text, removeHs=True)
     mol.SetProp("_Name", row.pubchemid)
 
     return mol
