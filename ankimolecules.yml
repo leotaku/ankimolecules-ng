@@ -6,11 +6,14 @@ dependencies:
   - pymol-bundle
   - vtk-m==1.5.1
   - pandas
+  - pandera
   - openpyxl
   - genanki
   - tqdm
-  # Development
-  - black
-  - pyright
+  - rdkit
   - pip:
     - cdpkit
+  # Development
+  - black
+  - isort
+  - python-lsp-server
