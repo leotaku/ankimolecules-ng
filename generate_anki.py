@@ -37,7 +37,7 @@ def fetch_chembl(id, kind: Literal["2d", "3d"]) -> Mol:
         f"https://www.ebi.ac.uk/chembl/api/data/molecule/{id}?format=sdf",
     )
     if rsp.status_code != 200:
-        raise Exception(f"could not fetch from ChEMBL: {row.name}")
+        raise Exception(f"could not fetch from ChEMBL: '{row.chemblid}'")
 
     mol = MolFromMolBlock(rsp.text, removeHs=False)
     mol.SetProp("_Name", row.chemblid)
@@ -57,7 +57,7 @@ def fetch_pubchem(id, kind: Literal["2d", "3d"]) -> Mol:
             mol = fetch_pubchem(id, kind="2d")
             return optimize_mol(mol)
         else:
-            raise Exception(f"could not fetch from PubChem: {row.pubchemid}")
+            raise Exception(f"could not fetch from PubChem: '{row.pubchemid}'")
 
     mol = MolFromMolBlock(rsp.text, removeHs=False)
     mol.SetProp("_Name", row.pubchemid)
