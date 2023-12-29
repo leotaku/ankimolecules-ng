@@ -104,7 +104,8 @@ def write_files(dir: Path, row: Row):
     with PyMOL() as p:
         p.cmd.load(pathMol3d)
         p.cmd.color("gray", "(symbol C)")
-        p.cmd.show_as("sticks")
+        p.cmd.show_as("sticks, bonded")
+        p.cmd.show_as("nb_spheres, not bonded")
         p.cmd.hide("(symbol H)")
         p.cmd.orient()
         p.cmd.zoom(complete=1)
