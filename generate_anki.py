@@ -11,7 +11,7 @@ from molecule_depict import MoleculeDepictor
 from spreadsheet_model import Row, SpreadsheetModel
 
 upstream_url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQgbPmrlTty5Q2luk79OigcbyWyQXAQR4xMpxNWJYHwMPpZvGjhBN7wd88vgAyWGMyzwIedvpR4iiNO/pub?output=xlsx"
-data_dir = Path("data_test")
+data_dir = Path("data")
 data_dir.mkdir(exist_ok=True, parents=True)
 
 sheets = pd.read_excel(upstream_url, sheet_name=None, dtype=str, keep_default_na=False)
