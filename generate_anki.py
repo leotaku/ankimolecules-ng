@@ -34,7 +34,10 @@ for sheet_name, sheet in sheets.items():
         if row.skip:
             continue
 
-        output = depictor.depict(row.pubchemid or row.chemblid)
+        try:
+            output = depictor.depict(row.pubchemid or row.chemblid)
+        except Exception as e:
+            raise e from Exception(f"failed to depict: '{row.name}'")
 
         note = MoleculeNote(
             name=row.name,
