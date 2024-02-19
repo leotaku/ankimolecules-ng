@@ -26,8 +26,16 @@ class MoleculeExport:
 
 
 class MoleculeDepictor:
-    def __init__(self, output_directory: PathLike):
+    def __init__(
+        self,
+        output_directory: PathLike,
+        cache_mol: bool = True,
+        cache_img: bool = True,
+    ):
         self.output_directory = Path(output_directory)
+        self.cache_mol = cache_mol
+        self.cache_img = cache_img
+
         self.previous_mol_2d = None
         self.previous_mol_3d_path = None
 
@@ -40,7 +48,7 @@ class MoleculeDepictor:
     def _fetch_mol_cached(self, id, kind: Literal["2d", "3d"]) -> (Mol, Path):
         molfile = self.output_directory.joinpath(f"{id}_{kind.upper()}.mol")
 
-        if molfile.exists():
+        if self.cache_mol and molfile.exists():
             mol = MolFromMolBlock(molfile.read_bytes())
         else:
             mol = fetch_mol(id, kind)
@@ -49,8 +57,11 @@ class MoleculeDepictor:
         return mol, molfile
 
     def _depict_2d(self, id: str) -> Path:
+        imagepath = self.output_directory.joinpath(f"{id}_2D.png")
+        if self.cache_img and imagepath.exists():
+            return imagepath
+
         mol, _ = self._fetch_mol_cached(id, kind="2d")
-        path = self.output_directory.joinpath(f"{id}_2D.png")
 
         from rdkit.Chem.rdMolAlign import AlignMol
 
@@ -60,14 +71,17 @@ class MoleculeDepictor:
             except:
                 pass
 
-        MolToImage(mol).save(path)
+        MolToImage(mol).save(imagepath)
 
         self.previous_mol_2d = mol
-        return path
+        return imagepath
 
     def _depict_3d(self, id: str) -> Path:
-        mol, molpath = self._fetch_mol_cached(id, kind="3d")
         imagepath = self.output_directory.joinpath(f"{id}_3D.png")
+        if self.cache_img and imagepath.exists():
+            return imagepath
+
+        mol, molpath = self._fetch_mol_cached(id, kind="3d")
 
         with PyMOL() as p:
             p.cmd.load(molpath.as_posix(), "this")
