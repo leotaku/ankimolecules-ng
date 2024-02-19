@@ -26,7 +26,7 @@ for sheet_name, sheet in sheets.items():
     try:
         sheet = SpreadsheetModel.validate(sheet).replace({np.nan: None})
     except BaseException as e:
-        raise Exception(f"validating {sheet_name}") from e
+        raise e from Exception(f"validating {sheet_name}")
 
     for row in tqdm(list(sheet.itertuples()), desc=sheet_name):  # type: ignore
         row: Row
