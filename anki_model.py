@@ -43,7 +43,7 @@ class DeckSet:
         return list(self._decks.values())
 
 
-model = Model(
+molecule_model = Model(
     1720913573,
     "Molecule",
     sort_field_index=0,
@@ -90,7 +90,7 @@ class MoleculeNote(Note):
         file_3d: PathLike,
     ):
         super().__init__(
-            model=model,
+            model=molecule_model,
             fields=[
                 name,
                 "↦".join(taxonomy),
@@ -104,3 +104,52 @@ class MoleculeNote(Note):
     @property
     def guid(self):
         return guid_for(self.fields[0] + ":::" + self.fields[1])  # type:ignore
+
+
+classification_model = Model(
+    1720913574,
+    "Taxonomy",
+    sort_field_index=0,
+    fields=[
+        {"name": "Taxonomy"},
+        {"name": "Image"},
+        {"name": "Image with Labels"},
+    ],
+    templates=[
+        {
+            "name": "Taxonomy",
+            "qfmt": "{{Image}}",
+            "afmt": '{{Image with Labels}}<hr id="answer">{{Taxonomy}}',
+        },
+    ],
+    css="""
+.card {
+  font-family: arial;
+  font-size: 20px;
+  text-align: center;
+  color: black;
+  background-color: white;
+}
+    """,
+)
+
+
+class TaxonomyNote(Note):
+    def __init__(
+        self,
+        taxonomy: [str],
+        file_unlabeled: PathLike,
+        file_labeled: PathLike,
+    ):
+        super().__init__(
+            model=classification_model,
+            fields=[
+                "↦".join(taxonomy),
+                f"<img src='{file_unlabeled}' />",
+                f"<img src='{file_labeled}' />",
+            ],
+        )
+
+    @property
+    def guid(self):
+        return guid_for(self.fields[0])  # type:ignore

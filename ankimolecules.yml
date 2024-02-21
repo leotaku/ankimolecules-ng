@@ -17,3 +17,10 @@ dependencies:
   - black
   - isort
   - python-lsp-server
+  # Jupyter
+  - ipykernel
+  - jupyter
+  - notebook
+  - jupyterlab
+  - nb_conda_kernels
+  - nb_black
